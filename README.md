@@ -14,17 +14,17 @@ Currently, I am configuring the app to just write the child agent to a file and 
 execute the code and test the weather agent.
 
 ## Steps
-1. Create a conda environment
+### 1. Create a conda environment
 ```
 conda create -n weni python=3.10
 ```
 
-2. Install the required packages
+### 2. Install the required packages
 ```
 pip install -r requirements.txt
 ```
 
-3. Create a .env file and add the following variables:
+### 3. Create a .env file and add the following variables:
 ```
 AWS_ACCESS_KEY_ID=your_access_key_id
 AWS_SECRET_ACCESS_KEY=your_secret_access_key
@@ -37,7 +37,7 @@ OPENWEATHERMAP_API_KEY=3c13f2d6e8beb2b1f742324dbbd8b212
     - Anthropic Claude 3 Sonnet
     - Titan Text G1 - Express
 
-5. Run the app:
+### 4. Run the app:
 
 Open a terminal and run the following command to connect to the app:
 ```
@@ -45,7 +45,7 @@ uvicorn main:app --reload
 ```
     This starts the FastAPI server on http://127.0.0.1:8000
 
-6. Test the app:
+### 5. Test the app:
 
 Open the test_requests.ipynb file and run the cells to test the app and configure the setup such as connection to the API and the LLMs.
 
