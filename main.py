@@ -4,7 +4,7 @@ from bedrock_handler import call_claude, call_titan
 from utilities import fetch_api_docs
 import requests
 import os
-
+import importlib
 app = FastAPI()
 
 class Prompt(BaseModel):
@@ -222,3 +222,28 @@ async def titan_child_agent(user_query: str = Query(..., description="User's wea
 
     except Exception as e:
         return {"error": str(e)}
+    
+@app.post("/verify_agent")
+async def verify_agent(agent_file: str = Query(..., description="Path to the agent file")):
+    try:
+        # First verify the syntax
+        with open(agent_file, 'r') as f:
+            code = f.read()
+            # Did Basic syntax check using compile to check if the code is valid
+            compile(code, agent_file, 'exec')
+        
+        # Executing the code directly using exec() in a new namespace
+        namespace = {}
+        exec(code, namespace)
+        
+        return {
+            "status": "success",
+            "syntax_valid": True,
+            "message": "Agent file executed successfully"
+        }
+            
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e)
+        }
