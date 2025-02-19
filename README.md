@@ -1,6 +1,18 @@
 # Weni_Chatbot
 Created an AI Agent using AWS Bedrock, capable of automatically creating other agents from an API documentation.
 
+## Overview
+The current setup uses the Claude 3 Sonnet Bedrock model to generate the child agent.
+
+The child agent is able to call the OpenWeatherMap API to get the current weather data for a city.
+It makes different api calls referring to the API documentation for the current weather data.
+
+The Claude Mother agent has been prompt engineered to generate an executable python code with no errors.
+It writes the code to a file called child_agent.py which can be executed using simple python commands to get the weather data for a city.
+
+Currently, I am configuring the app to just write the child agent to a file and not execute it so that the invigilator can 
+execute the code and test the weather agent.
+
 ## Steps
 1. Create a conda environment
 ```
@@ -52,7 +64,7 @@ I have used the OpenWeatherMap API to get the currentweather data for a city wit
 
 The Link to the API Docs is: https://openweathermap.org/current
 
-In addition, it has other API Docs which can be accessed by the child agent to get the 
+In addition, it has other API Docs which can be accessed by the child agent to get the in detail weather data for a city.
 
 To get the API key, you need to sign up on the OpenWeatherMap website and get the API key.
 
