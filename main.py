@@ -4,6 +4,9 @@ from bedrock_handler import call_claude, call_titan
 from utilities import fetch_api_docs
 import requests
 import os
+import importlib
+from io import StringIO
+import sys
 
 app = FastAPI()
 
@@ -222,3 +225,35 @@ async def titan_child_agent(user_query: str = Query(..., description="User's wea
 
     except Exception as e:
         return {"error": str(e)}
+    
+@app.post("/verify_agent")
+async def verify_agent(agent_file: str = Query(..., description="Path to the agent file")):
+    try:
+        # Using compile to check if the code is in valid syntax
+        with open(agent_file, 'r') as f:
+            code = f.read()
+            compile(code, agent_file, 'exec')
+        
+        stdout = StringIO()
+        sys.stdout = stdout
+
+        # Executing the code directly using exec() in a new namespace
+        namespace = {}
+        exec(code, namespace)
+
+        # Configured stdout to print the output
+        sys.stdout = sys.__stdout__
+        output = stdout.getvalue()
+
+        return {
+            "status": "success",
+            "syntax_valid": True,
+            "message": "Agent file executed successfully",
+            "output": output
+        }
+            
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e)
+        }
