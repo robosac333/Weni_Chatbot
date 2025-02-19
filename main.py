@@ -136,7 +136,7 @@ async def titan_child_agent(user_query: str = Query(..., description="User's wea
         api_docs = fetch_api_docs(api_docs_url)
         
         # Had to debug the API docs to remove the dataLayer code tracking code
-        # It was causing errors in the generated code
+        # It was causing errors to generate the code
         api_docs = api_docs.replace('dataLayer', '').strip()
         
         # Step 2: Generate prompt
@@ -211,7 +211,7 @@ async def titan_child_agent(user_query: str = Query(..., description="User's wea
         Do not use special characters like degree symbols (°) or other Unicode characters. Use 'C' for Celsius.
         """
 
-        # Step 3: Call Claude
+        # Step 3: Calling mother agent to generate the child agent
         response = call_claude(prompt)
 
         # Step 4: Save to a file
