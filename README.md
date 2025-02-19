@@ -17,6 +17,7 @@ pip install -r requirements.txt
 AWS_ACCESS_KEY_ID=your_access_key_id
 AWS_SECRET_ACCESS_KEY=your_secret_access_key
 AWS_REGION=your_region
+OPENWEATHERMAP_API_KEY=3c13f2d6e8beb2b1f742324dbbd8b212
 ```
     Configure the AWS credentials in the ~/.aws/credentials file.
 
@@ -42,6 +43,17 @@ Alternatively, you may use postman to test the app by sending a POST request to 
 {
     "text": "Say hi in one word"
 }
+```
+
+## Recieve response from a Weathermap API
+
+I have used the OpenWeatherMap API to get the weather data for a city mainly because it is free.
+
+To get the API key, you need to sign up on the OpenWeatherMap website and get the API key.
+
+To make the work easier, I have added the API key to the .env file and specified the key here if you don't want to configure the api key yourself.
+```
+OPENWEATHERMAP_API_KEY=3c13f2d6e8beb2b1f742324dbbd8b212
 ```
 
 

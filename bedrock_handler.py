@@ -7,7 +7,7 @@ load_dotenv()
 
 bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
 
-def call_bedrock(prompt: str):
+def call_claude(prompt: str):
     """
     For sending a request to AWS Bedrock to generate a response from Claude.
     """
@@ -32,5 +32,29 @@ def call_bedrock(prompt: str):
     response_body = json.loads(response['body'].read())
     return response_body['content'][0]['text']
 
+def call_titan(prompt: str):
+    """
+    For sending a request to AWS Bedrock to generate a response from Titan Express.
+    """
+    payload = {
+        "inputText": prompt,
+        "textGenerationConfig": {
+            "maxTokenCount": 200,
+            "stopSequences": [],
+            "temperature": 0.3,
+            "topP": 0.4
+        }
+    }
+
+    response = bedrock_client.invoke_model(
+        body=json.dumps(payload),
+        modelId="amazon.titan-text-express-v1",
+        contentType="application/json",
+        accept="application/json"
+    )
+    
+    response_body = json.loads(response['body'].read())
+    return response_body['results'][0]['outputText']
+
 if __name__ == "__main__":
-    print(call_bedrock("Say hi in one word"))
+    print(call_titan("Say hi in one word"))
