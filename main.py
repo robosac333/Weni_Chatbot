@@ -5,6 +5,9 @@ from utilities import fetch_api_docs
 import requests
 import os
 import importlib
+from io import StringIO
+import sys
+
 app = FastAPI()
 
 class Prompt(BaseModel):
@@ -226,20 +229,27 @@ async def titan_child_agent(user_query: str = Query(..., description="User's wea
 @app.post("/verify_agent")
 async def verify_agent(agent_file: str = Query(..., description="Path to the agent file")):
     try:
-        # First verify the syntax
+        # Using compile to check if the code is in valid syntax
         with open(agent_file, 'r') as f:
             code = f.read()
-            # Did Basic syntax check using compile to check if the code is valid
             compile(code, agent_file, 'exec')
         
+        stdout = StringIO()
+        sys.stdout = stdout
+
         # Executing the code directly using exec() in a new namespace
         namespace = {}
         exec(code, namespace)
-        
+
+        # Configured stdout to print the output
+        sys.stdout = sys.__stdout__
+        output = stdout.getvalue()
+
         return {
             "status": "success",
             "syntax_valid": True,
-            "message": "Agent file executed successfully"
+            "message": "Agent file executed successfully",
+            "output": output
         }
             
     except Exception as e:
