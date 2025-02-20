@@ -2,24 +2,6 @@ import requests
 import time
 from urllib.parse import urljoin
 
-test_apis = {
-    # OpenWeather
-    "Weather": {"url" : "https://openweathermap.org/api",
-    "API_KEY" : "3c13f2d6e8beb2b1f742324dbbd8b212"},
-    # 2. Reddit
-    "Reddit": {"url" : "https://www.reddit.com/dev/api/",
-    "API_KEY" : ""},
-    # 3. OpenExchangeRates  
-    "Currency": {"url" : "https://docs.openexchangerates.org/reference/api-introduction",
-    "API_KEY" : ""},
-    # 4. NASA API 
-    "NASA": {"url" : "https://api.nasa.gov/",
-    "API_KEY" : "ISxBTHQjvQaazVnIHy6322mahQx6fIm9YHzcFuMB"},
-    # 5. News-API 
-    "News": {"url" : "https://newsapi.org/docs/client-libraries/python",
-    "API_KEY" : "17a8051fc49f4cae89ca006f5e4189c6"},
-}
-
 def fetch_api_docs(base_url):
     """Fetch API documentation from the given URL."""
     try:

@@ -7,7 +7,6 @@ import os
 import importlib
 from io import StringIO
 import sys
-from utilities import test_apis
 
 app = FastAPI()
 
@@ -40,10 +39,10 @@ async def get_user_query(user_query: str = Query(..., description="User's weathe
         return {"error": str(e)}
     
 @app.get("/titan_child_agent")
-async def titan_child_agent(user_query: str = Query(..., description="User's weather query"), api_name: str = Query(..., description="API docs URL")):
+async def titan_child_agent(user_query: str = Query(..., description="User's weather query"), api_docs_url: str = Query(..., description="API docs URL"), api_key: str = Query(..., description="API key")):
     try:
         # Step 1: Fetch API docs
-        api_docs = fetch_api_docs(test_apis[api_name]['url'])
+        api_docs = fetch_api_docs(api_docs_url)
         
         if api_docs is None:
             return {"error": "Failed to fetch API docs"}
@@ -55,25 +54,20 @@ async def titan_child_agent(user_query: str = Query(..., description="User's wea
         prompt = f"""
         Generate a Python script based on the following API documentation:
         API Documentation:
-        API endpoint: {api_docs}
+        {api_docs}
         
         User Query:
         {user_query}
 
-        The script must:
-        1. Use the current weather data endpoint from the API docs above
-        2. Have only one function to write the code for:
-        - get_data(): to fetch the relevant data from the API
-        3. Use provided API documentation using plain ASCII strings only
-        4. All output strings must:
-        - Use only characters a-z, A-Z, 0-9, and basic punctuation
-        - Format numbers using standard digits
-        - No Unicode, emojis, or extended ASCII
-        - Weather outputs as 'Temperature: X C, Weather: description'
-        5. Do not write the code for the call_titan(prompt) function, just use it as it is from the bedrock_handler.py file
-        6. Use this exact code structure for the Bedrock call:
+        Requirements:
+        1. Create a get_data() function that:
+           - Extracts relevant API endpoint and parameters from the documentation
+           - Uses the API key: {api_key}
+           - Returns data in a standardized format
+           - Handles errors gracefully with clear error messages
+           - Uses only ASCII characters in responses
         
-            import boto3
+        2. Use this structure:
             import requests
             import json
             import os
@@ -82,29 +76,24 @@ async def titan_child_agent(user_query: str = Query(..., description="User's wea
 
             load_dotenv()
 
-            api_key = API key: {test_apis[api_name]["API_KEY"]}
+            def get_data():
+                # Your implementation here
+                # Must handle the API call based on the user query
+                # Return standardized response format
+            
+            # Get data and generate response
+            data = get_data()
+            response = call_titan(data)
+            print(response)
 
-        IMPORTANT: after this write the get_data() function and then call the Titan model
-        data = get_data()
-        response = call_titan(data)
-
-        6. The get_data() function must:
-        - Extract the API endpoint and parameters from the API docs above
-        - Take a city name as input
-        - Use os.getenv("OPENWEATHER_API_KEY") for the API key
-        - Return temperature in Celsius and weather description
-        - Handle errors gracefully
-
-        7. The main section should:
-        - Use the user query to formulate the get_data() function call
-        - Call get_data() with the required details from the user query to be able to fetch the weather data
-        - Give this weather data to the agent and generate a natural language response
-        - Make sure to print the response from the Titan model
-
-        Generate only the complete, executable Python code with no explanations or comments.
-        NOTE: The generated code should not ask any user input and should be able to fetch the weather data based on the user query.
-        IMPORTANT: Use only ASCII characters in all string outputs. 
-        Do not use special characters like degree symbols (°) or other Unicode characters. Use 'C' for Celsius.
+        3. The script must:
+           - Run automatically without user input
+           - Extract all needed parameters from the user query
+           - Use proper error handling
+           - Return data in a consistent format
+           - Use only ASCII characters
+        
+        Generate only the complete, executable Python code with minimal comments.
         """
 
         # Step 3: Calling mother agent to generate the child agent
