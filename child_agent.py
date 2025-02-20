@@ -7,27 +7,36 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-api_key = os.getenv("OPENWEATHERMAP_API_KEY")
+api_key = os.getenv("OPENWEATHER_API_KEY")
 
 def get_data():
-    latitude = 37.7749
-    longitude = -122.4194
-    api_url = f"http://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&appid={api_key}&units=metric"
+    lat = 37.7749
+    lon = -122.4194
+    
+    base_url = "https://api.openweathermap.org/data/2.5/weather"
+    
+    params = {
+        "lat": lat,
+        "lon": lon,
+        "appid": api_key,
+        "units": "metric"
+    }
     
     try:
-        response = requests.get(api_url)
+        response = requests.get(base_url, params=params)
         response.raise_for_status()
         data = response.json()
+        print(data)
+        temp = data["main"]["temp"]
+        description = data["weather"][0]["description"]
         
-        temperature = data["main"]["temp"]
-        weather_description = data["weather"][0]["description"]
-        
-        result = f"Temperature: {temperature} C, Weather: {weather_description}"
-        return result
+        weather_data = f"Temperature: {temp} C, Weather: {description}"
+        return weather_data
     
     except requests.exceptions.RequestException as e:
         return f"Error: {e}"
 
 data = get_data()
-response = call_titan(data)
-print(response)
+
+# response = call_titan(data)
+# print(response)

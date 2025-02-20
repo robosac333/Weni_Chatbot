@@ -1,6 +1,7 @@
 # Weni_Chatbot
 Created an AI Agent using AWS Bedrock, capable of automatically creating other agents from an API documentation.
 
+To enlist an api, along with the API key, you need to add the api to the test_apis dictionary in the utilities.py file.
 ## Overview
 The current setup uses the Claude 3 Sonnet Bedrock model to generate the child agent.
 

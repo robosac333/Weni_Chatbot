@@ -7,6 +7,7 @@ import os
 import importlib
 from io import StringIO
 import sys
+from utilities import test_apis
 
 app = FastAPI()
 
@@ -39,10 +40,10 @@ async def get_user_query(user_query: str = Query(..., description="User's weathe
         return {"error": str(e)}
     
 @app.get("/titan_child_agent")
-async def titan_child_agent(user_query: str = Query(..., description="User's weather query"), api_docs_url: str = Query(..., description="API docs URL")):
+async def titan_child_agent(user_query: str = Query(..., description="User's weather query"), api_name: str = Query(..., description="API docs URL")):
     try:
         # Step 1: Fetch API docs
-        api_docs = fetch_api_docs(api_docs_url)
+        api_docs = fetch_api_docs(test_apis[api_name]['url'])
         
         if api_docs is None:
             return {"error": "Failed to fetch API docs"}
@@ -55,7 +56,7 @@ async def titan_child_agent(user_query: str = Query(..., description="User's wea
         Generate a Python script based on the following API documentation:
         API Documentation:
         API endpoint: {api_docs}
-
+        
         User Query:
         {user_query}
 
@@ -81,7 +82,7 @@ async def titan_child_agent(user_query: str = Query(..., description="User's wea
 
             load_dotenv()
 
-            api_key = os.getenv("OPENWEATHERMAP_API_KEY")
+            api_key = API key: {test_apis[api_name]["API_KEY"]}
 
         IMPORTANT: after this write the get_data() function and then call the Titan model
         data = get_data()
