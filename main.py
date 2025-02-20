@@ -13,43 +13,39 @@ app = FastAPI()
 class Prompt(BaseModel):
    text: str
 
-class UserQuery(BaseModel):
-    user_query: str
-
 @app.post("/chat_claude")
 async def claude_test(prompt: Prompt):
    response = call_claude(prompt.text)
    return {"response": response}
 
-@app.post("/chat_titan")
+@app.post("/chat_titan")        
 async def titan_test(prompt: Prompt):
    response = call_titan(prompt.text)
    return {"response": response}
 
 @app.get("/weather")
-async def get_weather():
+async def get_weather(api_docs_url: str = Query(..., description="API docs URL")):
     try:
-        api_docs_url = "https://openweathermap.org/current"
         api_docs = fetch_api_docs(api_docs_url)
         return {"response": api_docs}
     except Exception as e:
         return {"error": str(e)}
 
 @app.post("/user_query")
-async def get_user_query(user_query: UserQuery):
+async def get_user_query(user_query: str = Query(..., description="User's weather query")):
     try:
-        user_query = user_query.user_query
-        return {"response": user_query}
+        return {"response": user_query}  
     except Exception as e:
         return {"error": str(e)}
-        
+    
 @app.get("/titan_child_agent")
-async def titan_child_agent(user_query: str = Query(..., description="User's weather query")):
+async def titan_child_agent(user_query: str = Query(..., description="User's weather query"), api_docs_url: str = Query(..., description="API docs URL")):
     try:
         # Step 1: Fetch API docs
-        api_docs_url = "https://openweathermap.org/current"
         api_docs = fetch_api_docs(api_docs_url)
         
+        if api_docs is None:
+            return {"error": "Failed to fetch API docs"}
         # Had to debug the API docs to remove the dataLayer code tracking code
         # It was causing errors to generate the code
         api_docs = api_docs.replace('dataLayer', '').strip()
