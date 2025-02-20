@@ -42,76 +42,6 @@ async def get_user_query(user_query: UserQuery):
         return {"response": user_query}
     except Exception as e:
         return {"error": str(e)}
-    
-@app.get("/claude_child_agent")
-async def claude_child_agent(user_query: str = Query(..., description="User's weather query")):
-        try:
-            # Step 1: Fetch API docs
-            api_docs_url = "https://openweathermap.org/current"
-            api_docs = fetch_api_docs(api_docs_url)
-
-            #Step 3: Generate child agent
-            prompt = """
-            Generate a Python script based on the following API documentation:
-            API Documentation:
-            {api_docs}
-            
-            User Query:
-            {user_query}
-            The script must:
-            1. Use the current weather data endpoint from the API docs above
-            2. Have only two core functions:
-            - call_claude(): to process user queries
-            - get_weather(): to fetch weather data
-            3. Use provided API documentation using plain ASCII strings only
-            4. All output strings must:
-            - Use only characters a-z, A-Z, 0-9, and basic punctuation
-            - Format numbers using standard digits
-            - No Unicode, emojis, or extended ASCII
-            - Weather outputs as 'Temperature: X C, Weather: description'
-            5. Do not write the code for the call_claude() function, just use it as it is from the bedrock_handler.py file
-            6. Use this exact code structure for the Bedrock call:
-            
-            import boto3
-            import requests
-            import json
-            import os
-            from bedrock_handler import call_claude
-            from dotenv import load_dotenv
-
-            load_dotenv()
-
-            api_key = os.getenv("OPENWEATHERMAP_API_KEY")
-            response = call_claude(prompt)
-
-            4. The get_weather() function must:
-            - Extract the API endpoint and parameters from the API docs above
-            - Take a city name as input
-            - Use os.getenv("OPENWEATHER_API_KEY") for the API key
-            - Return temperature in Celsius and weather description
-            - Handle errors gracefully
-            
-            5. The main section should:
-            - Use the user query to formulate the get_weather() function call
-            - Call get_weather() with the required details from the user query to be able to fetch the weather data
-            - Give this weather data to the agent and generate a natural language response
-            
-            Generate only the complete, executable Python code with no explanations or comments.
-            NOTE: The generated code should not ask any user input and should be able to fetch the weather data based on the user query.
-            IMPORTANT: Use only ASCII characters in all string outputs. 
-            Do not use special characters like degree symbols (°) or other Unicode characters. Use 'C' for Celsius.
-            """.format(api_docs=api_docs, user_query=user_query)
-
-            response = call_claude(prompt)
-
-            # Step 3: Save to a file
-            with open("child_agent.py", "w") as file:
-                file.write(response)
-
-            return {"message": "Child agent successfully created", "response": response}
-
-        except Exception as e:
-            return {"error": str(e)}
         
 @app.get("/titan_child_agent")
 async def titan_child_agent(user_query: str = Query(..., description="User's weather query")):
@@ -128,7 +58,7 @@ async def titan_child_agent(user_query: str = Query(..., description="User's wea
         prompt = f"""
         Generate a Python script based on the following API documentation:
         API Documentation:
-        Current weather data API endpoint: api.openweathermap.org/data/2.5/weather?q={{city name}}&appid={{API key}}
+        API endpoint: {api_docs}
 
         User Query:
         {user_query}
@@ -156,7 +86,10 @@ async def titan_child_agent(user_query: str = Query(..., description="User's wea
             load_dotenv()
 
             api_key = os.getenv("OPENWEATHERMAP_API_KEY")
-            response = call_titan(prompt)
+
+        IMPORTANT: after this write the get_data() function and then call the Titan model
+        data = get_data()
+        response = call_titan(data)
 
         6. The get_data() function must:
         - Extract the API endpoint and parameters from the API docs above
@@ -169,6 +102,7 @@ async def titan_child_agent(user_query: str = Query(..., description="User's wea
         - Use the user query to formulate the get_data() function call
         - Call get_data() with the required details from the user query to be able to fetch the weather data
         - Give this weather data to the agent and generate a natural language response
+        - Make sure to print the response from the Titan model
 
         Generate only the complete, executable Python code with no explanations or comments.
         NOTE: The generated code should not ask any user input and should be able to fetch the weather data based on the user query.

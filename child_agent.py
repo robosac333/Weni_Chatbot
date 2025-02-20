@@ -10,27 +10,24 @@ load_dotenv()
 api_key = os.getenv("OPENWEATHERMAP_API_KEY")
 
 def get_data(city):
-    api_endpoint = "http://api.openweathermap.org/data/2.5/weather"
-    params = {
-        "q": city,
-        "appid": api_key,
-        "units": "metric"
-    }
     try:
-        response = requests.get(api_endpoint, params=params)
+        url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
+        response = requests.get(url)
         response.raise_for_status()
         data = response.json()
-        temperature = data["main"]["temp"]
+        temp = data["main"]["temp"]
         description = data["weather"][0]["description"]
-        weather_info = f"Temperature: {temperature} C, Weather: {description}"
-        return weather_info
+        output = f"Temperature: {temp} C, Weather: {description}"
+        return output
     except requests.exceptions.RequestException as e:
         return f"Error: {e}"
+    except (KeyError, IndexError):
+        return "Error: Unable to extract weather data from API response"
+    except Exception as e:
+        return f"Error: {e}"
 
-prompt = f"How is the humidity in Sao Paulo Like?"
-response = call_titan(prompt)
-
-city = "Sao Paulo"
-weather_data = get_data(city)
-result = f"{response}\n\n{weather_data}"
-print(result)
+user_query = "How is the humidity in Saulo Paulo Like?"
+city_name = "Sao Paulo"
+data = get_data(city_name)
+response = call_titan(data)
+print(response)
