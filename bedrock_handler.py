@@ -13,7 +13,7 @@ def call_claude(prompt: str):
     """
     payload = {
         "anthropic_version": "bedrock-2023-05-31",
-        "max_tokens": 1000,
+        "max_tokens": 2500,
         "messages": [
             {
                 "role": "user",

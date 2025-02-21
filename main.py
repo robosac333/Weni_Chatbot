@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Query
 from pydantic import BaseModel
 from bedrock_handler import call_claude, call_titan
-from utilities import fetch_api_docs
+from utilities import fetch_api_docs, extract_python_code
 import requests
 import os
 import importlib
@@ -52,53 +52,56 @@ async def titan_child_agent(user_query: str = Query(..., description="User's wea
         
         # Step 2: Generate prompt
         prompt = f"""
-        Generate a Python script based on the following API documentation:
-        API Documentation:
+        {user_query}, 
         {api_docs}
-        
-        User Query:
-        {user_query}
+        Parse API documentation and generate Python code that:
 
-        Requirements:
-        1. Create a get_data() function that:
-           - Extracts relevant API endpoint and parameters from the documentation
-           - Uses the API key: {api_key}
-           - Returns data in a standardized format
-           - Handles errors gracefully with clear error messages
-           - Uses only ASCII characters in responses
-        
-        2. Use this structure:
+        1. EXTRACTION (from provided API documentation):
+            - Extract the Base URL and endpoint paths correctly
+            - Required/optional parameters
+            - Authentication requirements
+            - Response format
+            - Error codes
+
+        2.  Use this exact code structure for the Bedrock call:
+            ```python
             import requests
             import json
-            import os
             from bedrock_handler import call_titan
-            from dotenv import load_dotenv
-
-            load_dotenv()
-
-            def get_data():
-                # Your implementation here
-                # Must handle the API call based on the user query
-                # Return standardized response format
             
-            # Get data and generate response
-            data = get_data()
-            response = call_titan(data)
-            print(response)
+            api_key = {api_key}  # Include only if required by API
+            ```
+    
+                
+        3. REQUIREMENTS:
+        - Use exact endpoints/parameters from documentation
+            - Implement authentication as specified
+            - Implement all the features mentioned in the API documentation
+            - Handle errors according to documentation
+            - Use only ASCII characters
+            - Use only characters a-z, A-Z, 0-9, and basic punctuation
+            - No Unicode, symbols such as degree etc, emojis, or extended ASCII
 
-        3. The script must:
-           - Run automatically without user input
-           - Extract all needed parameters from the user query
-           - Use proper error handling
-           - Return data in a consistent format
-           - Use only ASCII characters
-        
-        Generate only the complete, executable Python code with minimal comments.
+        4. OUTPUT:
+            - Make it like a chatbot (AI agent), that can answer questions that are related to the given API.
+            - If asked any question that is not related to the API, just say "Sorry, the question above is irrelevant" and explain what this AI is built for 
+            - Once the chatbot is started, provide accurate instructions on how to input the query based on the code you write.
+            - if user query is not relevant, generate human-like response using the call_titan function that is already implemented, you can input prompt to get a response - call_titan(prompt)            
+
+                        
+
+        Generate code following everything given in above structure and based on provided API documentation.
+        IMPORTANT: Output only the clean executable code and nothing other than the code,
+        so that if the output from the llm is written to a python file, the file is valid and executable.
         """
 
         # Step 3: Calling mother agent to generate the child agent
         response = call_claude(prompt)
 
+
+        if "python" in response:
+            response = extract_python_code(response)
+        
         # Step 4: Save to a file
         with open("child_agent.py", "w") as file:
             file.write(response)

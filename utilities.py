@@ -1,6 +1,8 @@
 import requests
 import time
 from urllib.parse import urljoin
+import re
+
 
 def fetch_api_docs(base_url):
     """Fetch API documentation from the given URL."""
@@ -47,3 +49,17 @@ def fetch_api_docs(base_url):
     except Exception as e:
         return f"Error fetching API docs: {str(e)}"
 
+
+
+def extract_python_code(input_text):
+    # Match Python code blocks
+
+    code_blocks = re.findall(r'```python(.*?)```', input_text, re.DOTALL)
+    
+    if code_blocks:
+        clean_code = '\n'.join(code_blocks).strip()
+        return clean_code.replace("°", " ")
+    else:
+        if "python" in input_text:
+            re.sub(r'^(?i).*python.*\n?', '', input_text, count=1)
+        return input_text

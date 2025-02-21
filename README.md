@@ -1,20 +1,24 @@
 # Weni_Chatbot
-Created an AI Agent using AWS Bedrock, capable of automatically creating other agents from an API documentation.
+Created an AI Agent using AWS Bedrock, capable of automatically creating other agent chatbot answering questions related to an API Documentation.
 
-To enlist an api, along with the API key, you need to add the api to the test_apis dictionary in the utilities.py file.
 ## Overview
-The current setup uses the Claude 3 Sonnet Bedrock model to generate the child agent.
+The current setup uses the Anthropic Claude 3 Sonnet Bedrock agent to generate a Titan Text G1 - Express Bedrock agent creating an interactive chatbot!!
 
-The child agent is able to call the OpenWeatherMap API to get the current weather data for a city.
-It makes different api calls referring to the API documentation for the current weather data.
+Based on the user query and the input API Documentation, the Claude main agent has been prompt engineered to generate an executable python code with no errors.
+It writes the code to a file called child_agent.py which can be executed to generate a chatbot answering questions pertaining to the functionality demanded by the user.
 
-The Claude Mother agent has been prompt engineered to generate an executable python code with no errors.
-It writes the code to a file called child_agent.py which can be executed using simple python commands to get the weather data for a city.
+The app has two configurations to run the main agent.
 
-Currently, I am configuring the app to just write the child agent to a file and not execute it so that the invigilator can 
-execute the code and test the weather agent.
+1. Run the app as it is if you are sure if everything is configured correctly.
+2. When configuring the app for the first time, run the test_automation.ipynb file to check if:
+- The api-doc is retrievable from the API Documentation URL.
+- The LLM requests from bedrock are working fine.
+- The Claude main agent is able to generate the executable python code with no errors.
 
 ## Steps
+
+To set up the app, follow the steps below:
+
 ### 1. Create a conda environment
 ```
 conda create -n weni python=3.10
@@ -30,7 +34,6 @@ pip install -r requirements.txt
 AWS_ACCESS_KEY_ID=your_access_key_id
 AWS_SECRET_ACCESS_KEY=your_secret_access_key
 AWS_REGION=your_region
-OPENWEATHERMAP_API_KEY=3c13f2d6e8beb2b1f742324dbbd8b212
 ```
     To save time and effort in configuring the policies I have given administrator access to the user I am using and I suggest you to do the same.
 
@@ -50,29 +53,51 @@ uvicorn main:app --reload
 
 Open the test_requests.ipynb file and run the cells to test the app and configure the setup such as connection to the API and the LLMs.
 
-I have configured the Claude 3 Sonnet and Titan Text Express models to be used as the mother and the child agents respectively.
+- If you want to configure your own API doc, configure and check if the api-doc is retrievable from the API Documentation URL with the current retrieval method. Also attach the API key to the dictionary in first cell of the notebook.
 
-Alternatively, you may use postman to test the app by sending a POST request to http://localhost:8000/chat with the following body:
+- Check all the other configurations are working and the child agent is able to generate the executable python code with no errors.
+
+### 6. Run the main agent directly
+
+To run the main agent directly, run the following command:
 ```
-{
-    "text": "Say hi in one word"
-}
+python run_main_agent.py
+```
+If you want to directly see already generated child agents, run the .py files in the generated_agents folder such as weather_bot.py, news_bot.py, etc.
+
+### Sample Input 1
+```
+Enter your query: Create an AI agent that knows everything about given API documentation
+
+Enter the API docs URL: https://api.nasa.gov/
+
+Enter the API key: ISxBTHQjvQaazVnIHy6322mahQx6fIm9YHzcFuMB
 ```
 
-## Recieve response from a Weathermap API
 
-I have used the OpenWeatherMap API to get the currentweather data for a city with all the attributes mainly because it is free.
 
-The Link to the API Docs is: https://openweathermap.org/current
-
-In addition, it has other API Docs which can be accessed by the child agent to get the in detail weather data for a city.
-
-To get the API key, you need to sign up on the OpenWeatherMap website and get the API key.
-
-To make the work easier, I have added the API key to the .env file and specified the key here if you don't want to configure the api key yourself.
+## Disclaimer
+- When running the main agent, some times it generates an error for api calls.The error is as follows:
 ```
-OPENWEATHERMAP_API_KEY=3c13f2d6e8beb2b1f742324dbbd8b212
+'error': 'An error occurred (ThrottlingException) when calling the InvokeModel operation (reached max retries: 4): Too many requests, please wait before trying again. You have sent too many requests.  Wait before trying again.'
 ```
+This ThrottlingException occurs because AWS Bedrock has rate limits on the number of requests per second, and your application is exceeding the allowed request rate.
+
+
+- Sometimes the main agent may not be able to generate the child agent perfectly (some errors may occur), Re-run the main agent again which will generate a better child agent. This can be permanently overcome by using a better main agent.
+
+
+- When running the child_agent.py file, some times it generates api_token errors. In that case, you are requested to run the main agent again and generate the child agent again and the agent will work fine. 
+
+## Demos
+Here are the attached Videos of some demos
+
+[Weather Bot](https://drive.google.com/file/d/1Yu8jNRNEfpvj7m5A_dzjgDSSSqgk-3ZY/view?usp=sharing)
+
+[Nasa Bot](https://drive.google.com/file/d/1Nwjg8mC1KH7pNYJ3vQpwCad2PxmLTcq8/view?usp=sharing)
+
+[News Bot](https://drive.google.com/file/d/1uyTnyGmXBf2DYdw0PaWh3YByrTe85y1U/view?usp=sharing)
+
 
 
 
