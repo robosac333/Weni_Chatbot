@@ -3,3 +3,5 @@ fastapi
 uvicorn
 python-dotenv
 requests
+bs4
+PyYAML

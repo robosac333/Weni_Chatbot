@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Query
 from pydantic import BaseModel
 from bedrock_handler import call_claude, call_titan
-from utilities import fetch_api_docs
+from utilities import fetch_api_docs, extract_python_code
 import requests
 import os
 import importlib
@@ -13,210 +13,95 @@ app = FastAPI()
 class Prompt(BaseModel):
    text: str
 
-class UserQuery(BaseModel):
-    user_query: str
-
 @app.post("/chat_claude")
 async def claude_test(prompt: Prompt):
    response = call_claude(prompt.text)
    return {"response": response}
 
-@app.post("/chat_titan")
+@app.post("/chat_titan")        
 async def titan_test(prompt: Prompt):
    response = call_titan(prompt.text)
    return {"response": response}
 
 @app.get("/weather")
-async def get_weather():
+async def get_weather(api_docs_url: str = Query(..., description="API docs URL")):
     try:
-        api_docs_url = "https://openweathermap.org/current"
         api_docs = fetch_api_docs(api_docs_url)
         return {"response": api_docs}
     except Exception as e:
         return {"error": str(e)}
 
 @app.post("/user_query")
-async def get_user_query(user_query: UserQuery):
+async def get_user_query(user_query: str = Query(..., description="User's weather query")):
     try:
-        user_query = user_query.user_query
-        return {"response": user_query}
+        return {"response": user_query}  
     except Exception as e:
         return {"error": str(e)}
     
-@app.get("/claude_child_agent")
-async def claude_child_agent(user_query: str = Query(..., description="User's weather query")):
-        try:
-            # Step 1: Fetch API docs
-            api_docs_url = "https://openweathermap.org/current"
-            api_docs = fetch_api_docs(api_docs_url)
-
-            #Step 3: Generate child agent
-            prompt = """
-            Generate a Python script based on the following API documentation:
-            API Documentation:
-            {api_docs}
-            
-            User Query:
-            {user_query}
-            The script must:
-            1. Use the current weather data endpoint from the API docs above
-            2. Have only two core functions:
-            - call_claude(): to process user queries
-            - get_weather(): to fetch weather data
-            3. Use provided API documentation using plain ASCII strings only
-            4. All output strings must:
-            - Use only characters a-z, A-Z, 0-9, and basic punctuation
-            - Format numbers using standard digits
-            - No Unicode, emojis, or extended ASCII
-            - Weather outputs as 'Temperature: X C, Weather: description'
-            5. Use this exact code structure for the Bedrock call:
-            
-            import boto3
-            import requests
-            import json
-            import os
-            from dotenv import load_dotenv
-
-            load_dotenv()
-            api_key = os.getenv("OPENWEATHERMAP_API_KEY")
-            def call_claude(prompt: str):
-                bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
-                payload = {{
-                    "anthropic_version": "bedrock-2023-05-31",
-                    "max_tokens": 1000,
-                    "messages": [
-                        {{
-                            "role": "user",
-                            "content": prompt
-                        }}
-                    ]
-                }}
-
-                response = bedrock_client.invoke_model(
-                    body=json.dumps(payload),
-                    modelId="anthropic.claude-3-sonnet-20240229-v1:0",
-                    contentType="application/json",
-                    accept="application/json"
-                )
-                
-                response_body = json.loads(response['body'].read())
-                return response_body['content'][0]['text']
-
-            4. The get_weather() function must:
-            - Extract the API endpoint and parameters from the API docs above
-            - Take a city name as input
-            - Use os.getenv("OPENWEATHER_API_KEY") for the API key
-            - Return temperature in Celsius and weather description
-            - Handle errors gracefully
-            
-            5. The main section should:
-            - Use the user query to formulate the get_weather() function call
-            - Call get_weather() with the required details from the user query to be able to fetch the weather data
-            - Give this weather data to the agent and generate a natural language response
-            
-            Generate only the complete, executable Python code with no explanations or comments.
-            NOTE: The generated code should not ask any user input and should be able to fetch the weather data based on the user query.
-            IMPORTANT: Use only ASCII characters in all string outputs. 
-            Do not use special characters like degree symbols (°) or other Unicode characters. Use 'C' for Celsius.
-            """.format(api_docs=api_docs, user_query=user_query)
-
-            response = call_claude(prompt)
-
-            # Step 3: Save to a file
-            with open("child_agent.py", "w") as file:
-                file.write(response)
-
-            return {"message": "Child agent successfully created", "response": response}
-
-        except Exception as e:
-            return {"error": str(e)}
-        
 @app.get("/titan_child_agent")
-async def titan_child_agent(user_query: str = Query(..., description="User's weather query")):
+async def titan_child_agent(user_query: str = Query(..., description="User's weather query"), api_docs_url: str = Query(..., description="API docs URL"), api_key: str = Query(..., description="API key")):
     try:
         # Step 1: Fetch API docs
-        api_docs_url = "https://openweathermap.org/current"
         api_docs = fetch_api_docs(api_docs_url)
         
+        if api_docs is None:
+            return {"error": "Failed to fetch API docs"}
         # Had to debug the API docs to remove the dataLayer code tracking code
         # It was causing errors to generate the code
         api_docs = api_docs.replace('dataLayer', '').strip()
         
         # Step 2: Generate prompt
         prompt = f"""
-        Generate a Python script based on the following API documentation:
-        API Documentation:
-        Current weather data API endpoint: api.openweathermap.org/data/2.5/weather?q={{city name}}&appid={{API key}}
+        {user_query}, 
+        {api_docs}
+        Parse API documentation and generate Python code that:
 
-        User Query:
-        {user_query}
+        1. EXTRACTION (from provided API documentation):
+            - Extract the Base URL and endpoint paths correctly
+            - Required/optional parameters
+            - Authentication requirements
+            - Response format
+            - Error codes
 
-        The script must:
-        1. Use the current weather data endpoint from the API docs above
-        2. Have only two core functions:
-        - call_titan(): to process user queries
-        - get_weather(): to fetch weather data
-        3. Use provided API documentation using plain ASCII strings only
-        4. All output strings must:
-        - Use only characters a-z, A-Z, 0-9, and basic punctuation
-        - Format numbers using standard digits
-        - No Unicode, emojis, or extended ASCII
-        - Weather outputs as 'Temperature: X C, Weather: description'
-
-        5. Use this exact code structure for the Bedrock call:
-
-        import boto3
-        import requests
-        import json
-        import os
-        from dotenv import load_dotenv
-
-        load_dotenv()
-        api_key = os.getenv("OPENWEATHERMAP_API_KEY")
-        bedrock_client = boto3.client('bedrock-runtime')
-
-        def call_titan(prompt: str):
-            payload = {{
-                "inputText": prompt,
-                "textGenerationConfig": {{
-                    "maxTokenCount": 200,
-                    "stopSequences": [],
-                    "temperature": 0.5,
-                    "topP": 0.6
-                }}
-            }}
-
-            response = bedrock_client.invoke_model(
-                body=json.dumps(payload),
-                modelId="amazon.titan-text-express-v1",
-                contentType="application/json",
-                accept="application/json"
-            )
+        2.  Use this exact code structure for the Bedrock call:
+            ```python
+            import requests
+            import json
+            from bedrock_handler import call_titan
             
-            response_body = json.loads(response['body'].read())
-            return response_body['results'][0]['outputText']
+            api_key = {api_key}  # Include only if required by API
+            ```
+    
+                
+        3. REQUIREMENTS:
+        - Use exact endpoints/parameters from documentation
+            - Implement authentication as specified
+            - Implement all the features mentioned in the API documentation
+            - Handle errors according to documentation
+            - Use only ASCII characters
+            - Use only characters a-z, A-Z, 0-9, and basic punctuation
+            - No Unicode, symbols such as degree etc, emojis, or extended ASCII
 
-        6. The get_weather() function must:
-        - Extract the API endpoint and parameters from the API docs above
-        - Take a city name as input
-        - Use os.getenv("OPENWEATHER_API_KEY") for the API key
-        - Return temperature in Celsius and weather description
-        - Handle errors gracefully
+        4. OUTPUT:
+            - Make it like a chatbot (AI agent), that can answer questions that are related to the given API.
+            - If asked any question that is not related to the API, just say "Sorry, the question above is irrelevant" and explain what this AI is built for 
+            - Once the chatbot is started, provide accurate instructions on how to input the query based on the code you write.
+            - if user query is not relevant, generate human-like response using the call_titan function that is already implemented, you can input prompt to get a response - call_titan(prompt)            
 
-        7. The main section should:
-        - Use the user query to formulate the get_weather() function call
-        - Call get_weather() with the required details from the user query to be able to fetch the weather data
-        - Give this weather data to the agent and generate a natural language response
+                        
 
-        Generate only the complete, executable Python code with no explanations or comments.
-        NOTE: The generated code should not ask any user input and should be able to fetch the weather data based on the user query.
-        IMPORTANT: Use only ASCII characters in all string outputs. 
-        Do not use special characters like degree symbols (°) or other Unicode characters. Use 'C' for Celsius.
+        Generate code following everything given in above structure and based on provided API documentation.
+        IMPORTANT: Output only the clean executable code and nothing other than the code,
+        so that if the output from the llm is written to a python file, the file is valid and executable.
         """
 
         # Step 3: Calling mother agent to generate the child agent
         response = call_claude(prompt)
 
+
+        if "python" in response:
+            response = extract_python_code(response)
+        
         # Step 4: Save to a file
         with open("child_agent.py", "w") as file:
             file.write(response)
